@@ -1,0 +1,122 @@
+company,category,candidate_slugs,ats_hints
+Monzo,fintech,monzo,greenhouse
+Wise,fintech,wise|transferwise,greenhouse
+Starling Bank,fintech,starlingbank|starling,greenhouse|lever|ashby
+GoCardless,fintech,gocardless,greenhouse
+Checkout.com,fintech,checkoutcom|checkout,greenhouse
+Zopa,fintech,zopa,greenhouse|lever
+Tide,fintech,tide,greenhouse|lever
+SumUp,fintech,sumup,greenhouse
+TrueLayer,fintech,truelayer,greenhouse
+Thought Machine,fintech,thoughtmachine|thought-machine,greenhouse
+10x Banking,fintech,10xbanking|10x,greenhouse|lever
+OakNorth,fintech,oaknorth,greenhouse|lever
+Atom Bank,fintech,atombank|atom,greenhouse|lever
+Allica Bank,fintech,allicabank|allica,greenhouse|ashby
+ClearBank,fintech,clearbank,greenhouse|lever
+Zilch,fintech,zilch,greenhouse|ashby
+Curve,fintech,curve|imaginecurve,greenhouse|lever
+Moneybox,fintech,moneybox,greenhouse|ashby
+Freetrade,fintech,freetrade,greenhouse|lever
+PensionBee,fintech,pensionbee,greenhouse|lever
+Plum,fintech,plum|withplum,greenhouse|lever|ashby
+Ebury,fintech,ebury,greenhouse|lever
+Zepz,fintech,zepz|worldremit,greenhouse
+Wagestream,fintech,wagestream,greenhouse|ashby
+Marshmallow,fintech,marshmallow,greenhouse|ashby
+Cleo,fintech,cleo|cleoai|meetcleo,greenhouse|ashby
+Form3,fintech,form3,greenhouse|lever
+Paysend,fintech,paysend,greenhouse|lever
+Modulr,fintech,modulr|modulrfinance,greenhouse|lever
+Yonder,fintech,yonder,ashby|greenhouse
+Griffin,fintech,griffin|griffinbank,ashby|greenhouse
+FNZ,fintech,fnz,greenhouse|lever
+Smart Pension,fintech,smartpension|smart,greenhouse|lever
+Quantexa,ai_data,quantexa,greenhouse|lever
+Featurespace,ai_data,featurespace,greenhouse|lever
+Faculty,ai_data,faculty|facultyai,greenhouse|lever
+Synthesia,ai_data,synthesia,ashby|greenhouse
+PolyAI,ai_data,polyai|poly-ai,greenhouse|ashby
+Wayve,ai_data,wayve,greenhouse|ashby
+InstaDeep,ai_data,instadeep,greenhouse|lever
+Stability AI,ai_data,stabilityai|stability-ai|stability,greenhouse|ashby
+V7,ai_data,v7|v7labs,ashby|greenhouse
+ElevenLabs,ai_data,elevenlabs,ashby|greenhouse
+Isomorphic Labs,ai_data,isomorphiclabs|isomorphic-labs,greenhouse
+Graphcore,ai_data,graphcore,greenhouse|lever
+Tractable,ai_data,tractable,greenhouse|lever
+Peak,ai_data,peak|peakai,greenhouse|lever
+Beamery,ai_data,beamery,greenhouse|lever
+Signal AI,ai_data,signalai|signal-ai,greenhouse|lever
+Papercup,ai_data,papercup,ashby|greenhouse
+Robin AI,ai_data,robinai|robin-ai,ashby|greenhouse
+Builder.ai,ai_data,builderai|builder-ai|engineerai,greenhouse|lever
+Encord,ai_data,encord|cordtechnologies,ashby|greenhouse
+Deliveroo,consumer,deliveroo,greenhouse
+Depop,consumer,depop,greenhouse|lever
+Gousto,consumer,gousto,greenhouse|lever
+Bloom & Wild,consumer,bloomandwild|bloomwild,greenhouse|lever
+Moonpig,consumer,moonpig,greenhouse|lever
+Motorway,consumer,motorway,greenhouse|ashby
+Lyst,consumer,lyst,greenhouse|lever
+Trainline,consumer,trainline|thetrainline,greenhouse|lever
+Skyscanner,consumer,skyscanner,greenhouse|lever
+Zoopla,consumer,zoopla,greenhouse|lever
+Cazoo,consumer,cazoo,greenhouse|lever
+Beauty Pie,consumer,beautypie,greenhouse|lever
+Butternut Box,consumer,butternutbox|butternut,greenhouse|lever
+HungryPanda,consumer,hungrypanda,greenhouse|lever
+Octopus Energy,energy,octopusenergy|octopus-energy,greenhouse|lever
+Kraken,energy,kraken|krakentech|kraken-tech,greenhouse|lever
+OVO Energy,energy,ovoenergy|ovo,greenhouse|lever
+Tokamak Energy,energy,tokamakenergy|tokamak,greenhouse|lever
+First Light Fusion,energy,firstlightfusion,greenhouse|lever
+Zenobe,energy,zenobe|zenobeenergy,greenhouse|lever
+Snyk,devtools,snyk,greenhouse
+Paddle,devtools,paddle,greenhouse|ashby
+Tessian,devtools,tessian,greenhouse|lever
+Immersive Labs,devtools,immersivelabs|immersive-labs,greenhouse|lever
+Cydea,devtools,cydea,ashby|greenhouse
+PQShield,devtools,pqshield,greenhouse|lever
+Monolith AI,devtools,monolithai|monolith,greenhouse|lever
+Ably,devtools,ably,greenhouse|ashby
+Kluster,devtools,kluster,ashby|lever
+CloudNC,devtools,cloudnc,greenhouse|lever
+FiveAI,devtools,fiveai|five,greenhouse|lever
+Improbable,gaming,improbable,greenhouse
+Frontier Developments,gaming,frontierdevelopments|frontier,greenhouse|lever
+Playtech,gaming,playtech,greenhouse|lever
+Tripledot Studios,gaming,tripledotstudios|tripledot,greenhouse|ashby
+Space Ape Games,gaming,spaceapegames|spaceape,greenhouse|lever
+Accurx,health,accurx,ashby|greenhouse
+Huma,health,huma,greenhouse|lever
+Cera,health,cera|ceracare,greenhouse|lever
+ZOE,health,zoe|joinzoe,greenhouse|ashby
+Numan,health,numan,greenhouse|ashby
+Patchwork Health,health,patchworkhealth|patchwork,greenhouse|lever
+Second Nature,health,secondnature,greenhouse|lever
+Exscientia,health,exscientia,greenhouse|lever
+LabGenius,health,labgenius,ashby|greenhouse
+Ocado Technology,logistics,ocadotechnology|ocado,greenhouse|lever
+Zencargo,logistics,zencargo,greenhouse|lever
+Beacon,logistics,beacon|beacontech,greenhouse|lever
+HowNow,edtech,hownow|gethownow,greenhouse|ashby
+Multiverse,edtech,multiverse,greenhouse
+MyTutor,edtech,mytutor,greenhouse|lever
+Third Space Learning,edtech,thirdspacelearning,greenhouse|lever
+Attest,saas,attest|askattest,greenhouse|lever
+Paysafe,saas,paysafe,greenhouse|lever
+Onfido,saas,onfido,greenhouse|lever
+ComplyAdvantage,saas,complyadvantage,greenhouse|lever
+Codat,saas,codat,greenhouse|ashby
+Permutive,saas,permutive,greenhouse|lever
+Farewill,saas,farewill,greenhouse|lever
+Juro,saas,juro,ashby|greenhouse
+Legl,saas,legl,ashby|greenhouse
+Luminance,saas,luminance,greenhouse|lever
+Duel,saas,duel|dueltech,ashby|lever
+Sylvera,saas,sylvera,ashby|greenhouse
+Cervest,saas,cervest,greenhouse|lever
+TravelPerk,saas,travelperk,greenhouse
+Pleo,saas,pleo,greenhouse
+Payhawk,saas,payhawk,greenhouse|lever
