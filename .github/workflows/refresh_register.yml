@@ -1,1 +1,30 @@
+name: Refresh sponsor register
 
+on:
+  schedule:
+    # Register updates most weekdays; 07:30 UTC catches the morning publish.
+    - cron: "30 7 * * 1-5"
+  workflow_dispatch: {}   # manual run button
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 supabase
+
+      - name: Download and clean register
+        run: python ingest_sponsor_register.py
+
+      - name: Upload to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python upload_to_supabase.py
