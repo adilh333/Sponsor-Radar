@@ -128,16 +128,27 @@ def main() -> None:
     now = datetime.now(timezone.utc).isoformat()
     total, uk_total, sponsor_mention_total = 0, 0, 0
 
+    # Verified mappings win; fuzzy matching is only a fallback for
+    # companies no human has reviewed yet.
+    overrides = {
+        r["company_slug"]: r["sponsor_id"]
+        for r in client.table("sponsor_overrides")
+                        .select("company_slug,sponsor_id").execute().data
+    }
+    if overrides:
+        print(f"Loaded {len(overrides)} verified sponsor mappings.")
+
     for c in companies:
         name, ats, slug = c["company"], c["ats"], c["slug"]
 
         # Resolve the sponsor register row once per company.
-        sponsor_id = None
-        try:
-            resp = client.rpc("match_sponsor", {"company_name": name}).execute()
-            sponsor_id = resp.data
-        except Exception as e:  # noqa: BLE001 — log and continue
-            print(f"  sponsor match failed for {name}: {e}")
+        sponsor_id = overrides.get(slug)
+        if sponsor_id is None:
+            try:
+                resp = client.rpc("match_sponsor", {"company_name": name}).execute()
+                sponsor_id = resp.data
+            except Exception as e:  # noqa: BLE001 — log and continue
+                print(f"  sponsor match failed for {name}: {e}")
 
         rows = []
         try:
