@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 type Match = {
   job_id: number;
@@ -14,8 +14,6 @@ type Match = {
   explanation?: string;
 };
 
-// Bands calibrated for gte-small cosine similarity. Adjust after observing
-// real CVs: a strongly relevant CV should land its top matches in "strong".
 const STRONG = 0.8;
 const MODERATE = 0.74;
 
@@ -25,11 +23,63 @@ function band(sim: number): { label: string; cls: string } {
   return { label: "Weak match", cls: "band-weak" };
 }
 
+async function extractPdfText(file: File): Promise<string> {
+  const pdfjs = await import("pdfjs-dist");
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/build/pdf.worker.min.mjs",
+    import.meta.url
+  ).toString();
+  const buf = await file.arrayBuffer();
+  const doc = await pdfjs.getDocument({ data: buf }).promise;
+  let out = "";
+  for (let p = 1; p <= doc.numPages; p++) {
+    const page = await doc.getPage(p);
+    const content = await page.getTextContent();
+    out +=
+      content.items
+        .map((it) => ("str" in it ? (it as { str: string }).str : ""))
+        .join(" ") + "\n";
+  }
+  return out.trim();
+}
+
 export default function Home() {
   const [cv, setCv] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [showPaste, setShowPaste] = useState(false);
   const [matches, setMatches] = useState<Match[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [reading, setReading] = useState(false);
   const [error, setError] = useState("");
+  const fileInput = useRef<HTMLInputElement>(null);
+  const scannerRef = useRef<HTMLElement>(null);
+
+  async function handleFile(file: File) {
+    setError("");
+    setReading(true);
+    try {
+      let text = "";
+      if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
+        text = await extractPdfText(file);
+      } else if (file.type.startsWith("text/") || /\.(txt|md)$/i.test(file.name)) {
+        text = await file.text();
+      } else {
+        throw new Error("Upload a PDF or plain-text file, or paste your CV instead.");
+      }
+      if (text.length < 100) {
+        throw new Error(
+          "We couldn't read enough text from that file — it may be a scanned image. Paste your CV instead."
+        );
+      }
+      setCv(text);
+      setFileName(file.name);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not read that file.");
+      setFileName("");
+    } finally {
+      setReading(false);
+    }
+  }
 
   async function runMatch() {
     setLoading(true);
@@ -51,15 +101,31 @@ export default function Home() {
     }
   }
 
-  const strongOrModerate =
-    matches?.filter((m) => m.similarity >= MODERATE) ?? [];
-  const poolIsWeak = matches !== null && matches.length > 0 && strongOrModerate.length === 0;
+  const strongOrModerate = matches?.filter((m) => m.similarity >= MODERATE) ?? [];
+  const poolIsWeak =
+    matches !== null && matches.length > 0 && strongOrModerate.length === 0;
 
   return (
     <main className="wrap">
       <header className="masthead">
-        <div className="mark">SR</div>
-        <span className="wordmark">Sponsor Radar</span>
+        <div className="mast-left">
+          <div className="mark">SR</div>
+          <span className="wordmark">Sponsor Radar</span>
+        </div>
+        <nav className="mast-nav">
+          <a href="#how">How it works</a>
+          <a href="#pricing">Pricing</a>
+          <a
+            href="#scanner"
+            className="nav-cta"
+            onClick={(e) => {
+              e.preventDefault();
+              scannerRef.current?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            Scan my CV
+          </a>
+        </nav>
       </header>
 
       <section className="hero">
@@ -71,24 +137,73 @@ export default function Home() {
           We cross-reference live UK job postings against the Home Office
           register of licensed sponsors — updated daily — so you stop
           researching companies that were never going to sponsor anyone.
-          Paste your CV to see your matches.
         </p>
       </section>
 
-      <section className="input-card">
-        <label htmlFor="cv">Your CV</label>
-        <textarea
-          id="cv"
-          value={cv}
-          onChange={(e) => setCv(e.target.value)}
-          placeholder="Paste the full text of your CV here — skills, projects, experience. The more detail, the better the matches."
-          rows={10}
-        />
+      <section className="input-card" id="scanner" ref={scannerRef}>
+        <label>Your CV</label>
+
+        <div
+          className="dropzone"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            const f = e.dataTransfer.files?.[0];
+            if (f) handleFile(f);
+          }}
+        >
+          <input
+            ref={fileInput}
+            type="file"
+            accept=".pdf,.txt,.md,application/pdf,text/plain"
+            hidden
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleFile(f);
+            }}
+          />
+          <button
+            type="button"
+            className="upload-btn"
+            onClick={() => fileInput.current?.click()}
+            disabled={reading}
+          >
+            {reading ? "Reading file…" : "Upload CV (PDF)"}
+          </button>
+          <p className="drop-hint">
+            {fileName
+              ? `Loaded: ${fileName} (${cv.length.toLocaleString()} characters)`
+              : "or drag a file here"}
+          </p>
+          <button
+            type="button"
+            className="paste-toggle"
+            onClick={() => setShowPaste(!showPaste)}
+          >
+            {showPaste ? "Hide text" : "Paste text instead"}
+          </button>
+        </div>
+
+        {showPaste && (
+          <textarea
+            value={cv}
+            onChange={(e) => {
+              setCv(e.target.value);
+              setFileName("");
+            }}
+            placeholder="Paste the full text of your CV here — skills, projects, experience."
+            rows={8}
+          />
+        )}
+
         <div className="input-row">
           <span className="hint">
-            Nothing is stored. Your CV is used once to find matches.
+            Nothing is stored. Your CV is read once, matched, and discarded.
           </span>
-          <button onClick={runMatch} disabled={loading || cv.trim().length < 100}>
+          <button
+            onClick={runMatch}
+            disabled={loading || reading || cv.trim().length < 100}
+          >
             {loading ? "Scanning the register…" : "Find my matches"}
           </button>
         </div>
@@ -99,10 +214,9 @@ export default function Home() {
         <section className="coverage-note">
           <p className="coverage-head">No strong matches for your background yet</p>
           <p>
-            Our job coverage is currently strongest in technology, fintech and
-            data roles. The results below are the nearest available, but we
-            would rather tell you they are weak than pretend otherwise.
-            Coverage of healthcare, education and other sectors is being added.
+            Our coverage is expanding across sectors. The results below are the
+            nearest available, but we would rather tell you they are weak than
+            pretend otherwise. Check back — jobs refresh every day.
           </p>
         </section>
       )}
@@ -119,9 +233,7 @@ export default function Home() {
                 <div className="job-rank">{String(i + 1).padStart(2, "0")}</div>
                 <div className="job-body">
                   <h2>{m.title}</h2>
-                  <p className="job-meta">
-                    {m.company} · {m.location || "UK"}
-                  </p>
+                  <p className="job-meta">{m.company} · {m.location || "UK"}</p>
                   <p className={`job-band ${b.cls}`}>
                     {b.label} · {(m.similarity * 100).toFixed(0)}%
                   </p>
@@ -132,11 +244,6 @@ export default function Home() {
                 </div>
                 <div
                   className={`stamp ${m.mentions_sponsorship ? "stamp-confirmed" : "stamp-likely"}`}
-                  aria-label={
-                    m.mentions_sponsorship
-                      ? "Sponsorship mentioned in the job posting"
-                      : "Company holds an A-rated sponsor licence"
-                  }
                 >
                   {m.mentions_sponsorship ? "Sponsorship stated" : "Licensed sponsor"}
                 </div>
@@ -159,6 +266,138 @@ export default function Home() {
           </p>
         </section>
       )}
+
+      <section className="story">
+        <p className="section-label">Why this exists</p>
+        <h2 className="section-title">
+          Built by a graduate on the visa clock.
+        </h2>
+        <div className="story-cols">
+          <p>
+            If you are on a Graduate visa, you know the routine: find a job you
+            like, open the Home Office register — a spreadsheet with over
+            125,000 rows — and Ctrl+F the company name. Guess whether the
+            salary clears the threshold. Apply. Hope. Repeat, for every single
+            application, against a deadline that does not move.
+          </p>
+          <p>
+            Sponsor Radar was built by an international graduate in Manchester
+            doing exactly that. It does the cross-referencing automatically:
+            live jobs, matched to your CV by meaning rather than keywords, at
+            employers verified against the register — with honest labels when
+            a match is weak, because false hope costs you time you do not have.
+          </p>
+        </div>
+      </section>
+
+      <section className="how" id="how">
+        <p className="section-label">How it works</p>
+        <div className="steps">
+          <div className="step">
+            <p className="step-no">1</p>
+            <h3>We track the register</h3>
+            <p>
+              The Home Office list of licensed sponsors is ingested every
+              weekday — 125,000+ organisations, cleaned and matched to live
+              job postings across tech, healthcare, engineering, finance,
+              education and more.
+            </p>
+          </div>
+          <div className="step">
+            <p className="step-no">2</p>
+            <h3>Your CV is read for meaning</h3>
+            <p>
+              Your CV is converted to a semantic fingerprint and compared
+              against every live role — so a health analytics graduate matches
+              health data jobs, not just postings sharing a keyword.
+            </p>
+          </div>
+          <div className="step">
+            <p className="step-no">3</p>
+            <h3>Every result is stamped</h3>
+            <p>
+              Each match shows its register entry, its rating, and whether the
+              posting itself mentions sponsorship — and we label match strength
+              honestly instead of padding the list.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="stats">
+        <div className="stat">
+          <p className="stat-n">125,000+</p>
+          <p className="stat-l">licensed sponsors tracked</p>
+        </div>
+        <div className="stat">
+          <p className="stat-n">Daily</p>
+          <p className="stat-l">register &amp; job refresh</p>
+        </div>
+        <div className="stat">
+          <p className="stat-n">8 sectors</p>
+          <p className="stat-l">and expanding</p>
+        </div>
+      </section>
+
+      <section className="pricing" id="pricing">
+        <p className="section-label">Pricing</p>
+        <div className="plans">
+          <div className="plan">
+            <h3>Free</h3>
+            <p className="plan-price">£0</p>
+            <ul>
+              <li>CV scans against the full job pool</li>
+              <li>Top 15 matches with confidence labels</li>
+              <li>Register verification on every result</li>
+            </ul>
+            <a
+              className="plan-btn"
+              href="#scanner"
+              onClick={(e) => {
+                e.preventDefault();
+                scannerRef.current?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              Scan my CV
+            </a>
+          </div>
+          <div className="plan plan-pro">
+            <h3>Pro <span className="plan-badge">Early access</span></h3>
+            <p className="plan-price">£7<span>/month</span></p>
+            <ul>
+              <li>Daily email alerts for new matches</li>
+              <li>Full ranked list, not just the top 15</li>
+              <li>Salary-threshold checks per role</li>
+              <li>Visa-deadline-aware prioritisation</li>
+            </ul>
+            <a
+              className="plan-btn plan-btn-pro"
+              href="mailto:rajaadil0220@gmail.com?subject=Sponsor%20Radar%20Pro%20early%20access"
+            >
+              Join the early-access list
+            </a>
+            <p className="plan-note">
+              Pro is in development — early-access members get it free while
+              we build.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer className="footer">
+        <p>
+          Sponsor data: UK Home Office register of licensed sponsors (Workers).
+          Sponsor Radar is an independent tool and is not affiliated with the
+          Home Office. A sponsor licence does not guarantee sponsorship for any
+          specific role — always confirm with the employer.
+        </p>
+        <p className="footer-meta">
+          Built in Manchester ·{" "}
+          <a href="https://github.com/adilh333" target="_blank" rel="noreferrer">
+            github.com/adilh333
+          </a>
+        </p>
+      </footer>
     </main>
   );
 }
