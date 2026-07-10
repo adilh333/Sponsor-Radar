@@ -17,6 +17,61 @@ type Match = {
 const STRONG = 0.8;
 const MODERATE = 0.74;
 
+function WaitlistForm() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "busy" | "done" | "error">("idle");
+  const [msg, setMsg] = useState("");
+
+  async function join() {
+    setStatus("busy");
+    setMsg("");
+    try {
+      const res = await fetch("/api/early-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, website: "" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      setStatus("done");
+    } catch (e) {
+      setStatus("error");
+      setMsg(e instanceof Error ? e.message : "Something went wrong");
+    }
+  }
+
+  if (status === "done") {
+    return (
+      <p className="waitlist-done">
+        ✓ You&apos;re on the list — we&apos;ll email you when Pro opens.
+      </p>
+    );
+  }
+  return (
+    <div className="waitlist">
+      <div className="waitlist-row">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          aria-label="Email address for early access"
+          onKeyDown={(e) => e.key === "Enter" && join()}
+        />
+        <button
+          type="button"
+          className="waitlist-btn"
+          onClick={join}
+          disabled={status === "busy" || !email.includes("@")}
+        >
+          {status === "busy" ? "Joining…" : "Join early access"}
+        </button>
+      </div>
+      {status === "error" && <p className="error">{msg}</p>}
+    </div>
+  );
+}
+
 function band(sim: number): { label: string; cls: string } {
   if (sim >= STRONG) return { label: "Strong match", cls: "band-strong" };
   if (sim >= MODERATE) return { label: "Moderate match", cls: "band-moderate" };
@@ -370,12 +425,7 @@ export default function Home() {
               <li>Salary-threshold checks per role</li>
               <li>Visa-deadline-aware prioritisation</li>
             </ul>
-            <a
-              className="plan-btn plan-btn-pro"
-              href="mailto:rajaadil0220@gmail.com?subject=Sponsor%20Radar%20Pro%20early%20access"
-            >
-              Join the early-access list
-            </a>
+            <WaitlistForm />
             <p className="plan-note">
               Pro is in development — early-access members get it free while
               we build.
