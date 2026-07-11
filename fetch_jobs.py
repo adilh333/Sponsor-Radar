@@ -49,6 +49,26 @@ NO_SPONSOR_PATTERN = re.compile(
 )
 
 
+SENIOR_RE = re.compile(
+    r"\b(principal|staff engineer|head of|director|vp|vice president|chief|lead|senior|sr\.?)\b",
+    re.IGNORECASE)
+INTERN_RE = re.compile(r"\b(intern|internship|placement year|industrial placement)\b", re.IGNORECASE)
+GRAD_RE = re.compile(r"\b(graduate|entry[- ]level|trainee|apprentice)\b", re.IGNORECASE)
+JUNIOR_RE = re.compile(r"\b(junior|jnr)\b", re.IGNORECASE)
+
+
+def classify_seniority(title: str) -> str:
+    if SENIOR_RE.search(title):
+        return "senior"
+    if INTERN_RE.search(title):
+        return "intern"
+    if GRAD_RE.search(title):
+        return "graduate"
+    if JUNIOR_RE.search(title):
+        return "junior"
+    return "mid"
+
+
 def strip_html(text: str) -> str:
     return re.sub(r"<[^>]+>", " ", html.unescape(text or ""))
 
@@ -154,6 +174,7 @@ def main() -> None:
         try:
             for job in FETCHERS[ats](slug):
                 is_uk, mentions = classify(job["location"], job["description"])
+                desc_plain = strip_html(job["description"])[:15000]
                 rows.append({
                     "external_id": job["external_id"],
                     "source": ats,
@@ -164,8 +185,10 @@ def main() -> None:
                     "location": job["location"][:300],
                     "is_uk": is_uk,
                     "url": job["url"],
-                    "description": strip_html(job["description"])[:15000],
+                    "description": desc_plain,
                     "mentions_sponsorship": mentions,
+                    "sponsorship_negative": bool(NO_SPONSOR_PATTERN.search(desc_plain)),
+                    "seniority": classify_seniority(job["title"]),
                     "posted_at": job["posted_at"],
                     "last_seen": now,
                 })
