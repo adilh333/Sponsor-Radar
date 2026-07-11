@@ -50,6 +50,28 @@ NO_SPONSOR_HINTS = (
 )
 
 
+import re
+
+SENIOR_RE = re.compile(
+    r"\b(principal|staff engineer|head of|director|vp|vice president|chief|lead|senior|sr\.?)\b",
+    re.IGNORECASE)
+INTERN_RE = re.compile(r"\b(intern|internship|placement year|industrial placement)\b", re.IGNORECASE)
+GRAD_RE = re.compile(r"\b(graduate|entry[- ]level|trainee|apprentice)\b", re.IGNORECASE)
+JUNIOR_RE = re.compile(r"\b(junior|jnr)\b", re.IGNORECASE)
+
+
+def classify_seniority(title: str) -> str:
+    if SENIOR_RE.search(title):
+        return "senior"
+    if INTERN_RE.search(title):
+        return "intern"
+    if GRAD_RE.search(title):
+        return "graduate"
+    if JUNIOR_RE.search(title):
+        return "junior"
+    return "mid"
+
+
 def classify_sponsorship(text: str) -> bool:
     t = (text or "").lower()
     return any(h in t for h in SPONSOR_HINTS) and not any(
@@ -121,6 +143,8 @@ def main() -> None:
                     "url": j.get("redirect_url") or "",
                     "description": desc[:15000],
                     "mentions_sponsorship": classify_sponsorship(desc),
+                    "sponsorship_negative": any(h in desc.lower() for h in NO_SPONSOR_HINTS),
+                    "seniority": classify_seniority(j.get("title") or ""),
                     "posted_at": j.get("created"),
                     "last_seen": now,
                 })
