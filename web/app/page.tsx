@@ -10,9 +10,12 @@ type Match = {
   url: string;
   mentions_sponsorship: boolean;
   sponsor_name: string;
+  seniority: string;
   similarity: number;
   explanation?: string;
 };
+
+type Meta = { years: number; levels: string[] | null };
 
 const STRONG = 0.8;
 const MODERATE = 0.74;
@@ -103,6 +106,9 @@ export default function Home() {
   const [fileName, setFileName] = useState("");
   const [showPaste, setShowPaste] = useState(false);
   const [matches, setMatches] = useState<Match[] | null>(null);
+  const [meta, setMeta] = useState<Meta | null>(null);
+  const [includeAllLevels, setIncludeAllLevels] = useState(false);
+  const [statedOnly, setStatedOnly] = useState(false);
   const [loading, setLoading] = useState(false);
   const [reading, setReading] = useState(false);
   const [error, setError] = useState("");
@@ -144,11 +150,12 @@ export default function Home() {
       const res = await fetch("/api/match", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cv }),
+        body: JSON.stringify({ cv, includeAllLevels, statedOnly }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
       setMatches(data.matches);
+      setMeta(data.meta ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -251,6 +258,25 @@ export default function Home() {
           />
         )}
 
+        <div className="filters">
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={statedOnly}
+              onChange={(e) => setStatedOnly(e.target.checked)}
+            />
+            Only jobs that state sponsorship in the posting
+          </label>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={includeAllLevels}
+              onChange={(e) => setIncludeAllLevels(e.target.checked)}
+            />
+            Include all seniority levels
+          </label>
+        </div>
+
         <div className="input-row">
           <span className="hint">
             Nothing is stored. Your CV is read once, matched, and discarded.
@@ -281,6 +307,15 @@ export default function Home() {
           <p className="results-head">
             {matches.length} matches at A-rated licensed sponsors
           </p>
+          {meta && meta.levels && (
+            <p className="detect-note">
+              We read roughly {meta.years} year{meta.years === 1 ? "" : "s"} of
+              experience in your CV, so we're showing{" "}
+              {meta.levels.join(", ")} roles — jobs that explicitly refuse
+              sponsorship are always excluded. Tick "include all seniority
+              levels" above if we got that wrong.
+            </p>
+          )}
           {matches.map((m, i) => {
             const b = band(m.similarity);
             return (
