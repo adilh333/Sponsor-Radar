@@ -66,7 +66,7 @@ def classify_seniority(title: str) -> str:
         return "graduate"
     if JUNIOR_RE.search(title):
         return "junior"
-    return "mid"
+    return "unknown"
 
 
 def strip_html(text: str) -> str:
