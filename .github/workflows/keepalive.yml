@@ -1,0 +1,68 @@
+name: Keep scheduled workflows alive
+
+# Refresh jobs and Refresh sponsor register write to Supabase and do not
+# commit. In a public repository GitHub disables scheduled workflows after
+# 60 days without a commit, which is what paused both of them. This job
+# commits one timestamp on the default branch once that branch has been
+# quiet for 30 days. A commit is repository activity. The push uses
+# GITHUB_TOKEN, which does not start another workflow run, so it cannot loop.
+#
+# It does not re-enable a workflow already in disabled_inactivity. Those
+# have to be turned back on in the Actions tab.
+
+on:
+  schedule:
+    # Twice a week, off the hour, before the weekday register refresh.
+    # GitHub may delay or drop a single cron; the 30-day threshold leaves
+    # several later runs before the 60-day cutoff.
+    - cron: "17 6 * * 1,4"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
+
+jobs:
+  keepalive:
+    if: github.event.repository.fork == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 1
+
+      - name: Commit a timestamp if the default branch has been quiet
+        env:
+          QUIET_DAYS: "30"
+          TARGET_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          last_commit_epoch="$(git log -1 --format=%ct)"
+          now_epoch="$(date +%s)"
+          age_days="$(( (now_epoch - last_commit_epoch) / 86400 ))"
+          echo "Default branch ${TARGET_BRANCH} last commit was ${age_days} days ago (threshold ${QUIET_DAYS})."
+          if [ "${age_days}" -lt "${QUIET_DAYS}" ]; then
+            echo "Recent commit on ${TARGET_BRANCH}; leaving history unchanged."
+            exit 0
+          fi
+
+          stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          mkdir -p .github
+          {
+            echo "# Written by .github/workflows/keepalive.yml when ${TARGET_BRANCH} has had no commit for ${QUIET_DAYS} days."
+            echo "# Scheduled workflows on this public repository are disabled after 60 days without a commit."
+            echo "# The register and job refreshes write to Supabase, so this file is the activity that keeps them scheduled."
+            echo "${stamp}"
+          } > .github/last-activity
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/last-activity
+          git commit -m "chore: record activity so scheduled workflows stay enabled"
+          git push origin "HEAD:${TARGET_BRANCH}"
+          echo "Pushed activity commit ${stamp} to ${TARGET_BRANCH}."
